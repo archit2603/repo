@@ -141,12 +141,8 @@ def predicting(model, device, loader):
             prot = data[1].to(device)
             output = model(drug, prot)
             total_preds = torch.cat((total_preds, output.cpu()), 0)
-            if mode == 0:
-                total_labels = torch.cat((total_labels, drug.y.view(-1, 1).cpu()), 0)
-    if mode == 0:
-        return total_labels.numpy().flatten(), total_preds.numpy().flatten()
-    if mode == 1:
-        return total_preds.numpy().flatten()
+            total_labels = torch.cat((total_labels, drug.y.view(-1, 1).cpu()), 0)
+    return total_labels.numpy().flatten(), total_preds.numpy().flatten()
 
 
 def resume(model, optimizer, savefile):
@@ -168,45 +164,15 @@ pdbs = []
 pdbs_seqs = []
 all_labels = []
 
-if mode == 0:
-    # Load train and test data
-    opts = ['train', 'test', 'valid']
-    for opt in opts:
-        df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_' + opt + setting + '.csv')
-        compound_iso_smiles += list(df['compound_iso_smiles'])
-        pdbs += list(df['target_name'])
-        pdbs_seqs += list(df['target_sequence'])
-        all_labels += list(df['affinity'])
-    pdbs_tseqs = set(zip(pdbs, pdbs_seqs, compound_iso_smiles, all_labels))
-
-if mode == 1:
-    # Load new data for prediction
-    temp1 = []
-    temp2 = []
-    temp3 = []
-    with open('data/predict/drugs/smiles.smi') as file:
-        compound_iso_smiles = file.read().split('\n')
-    num_smiles = len(compound_iso_smiles)
-    for i in range(num_smiles):
-        compound_iso_smiles[i] = compound_iso_smiles[i].split(' ')[0]
-    targets = pd.read_csv('data/predict/targets/targets.csv')
-    pdbs = list(targets['target_name'])
-    pdbs_seqs = list(targets['target_sequence'])
-
-    for target_name, target_sequence in zip(pdbs, pdbs_seqs):
-        temp3 += compound_iso_smiles
-        for i in range(num_smiles):
-            temp1.append(tar_name)
-            temp2.append(tar_seq)
-
-    pdbs = temp1
-    del temp1
-    pdbs_seqs = temp2
-    del temp2
-    compound_iso_smiles = temp3
-    del temp3
-    pdbs_tseqs = set(zip(pdbs, pdbs_seqs, compound_iso_smiles))
-
+# Load train and test data
+opts = ['train', 'test', 'valid']
+for opt in opts:
+    df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_' + opt + setting + '.csv')
+    compound_iso_smiles += list(df['compound_iso_smiles'])
+    pdbs += list(df['target_name'])
+    pdbs_seqs += list(df['target_sequence'])
+    all_labels += list(df['affinity'])
+pdbs_tseqs = set(zip(pdbs, pdbs_seqs, compound_iso_smiles, all_labels))
 
 # Protein pre-processing
 dta_graph = {}
@@ -234,10 +200,10 @@ else:
     with open('saved_prot_graph.pickle', 'wb') as handle:
         pickle.dump(saved_prot_graph, handle, protocol = pickle.HIGHEST_PROTOCOL)
 print(len(compound_iso_smiles))
+
 # Drugs pre-processing
 print('Pre-processing smiles...')
 saved_drug_graph = {}
-i = 1
 if os.path.isfile('saved_drug_graph.pickle'):
     print('Load pre-processed file for drug_graph')
     with open('saved_drug_graph.pickle', 'rb') as handle:
@@ -251,8 +217,6 @@ else:
             edge_index = torch.LongTensor(edge_index2).transpose(1, 0),
         )
         saved_drug_graph[smiles] = g2
-        print(i)
-        i+=1
     with open('saved_drug_graph.pickle', 'wb') as handle:
         pickle.dump(saved_drug_graph, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -272,23 +236,15 @@ for target, seq, smile, label in pdbs_tseqs:
     num_feat_xd = g2.x.size()[1]
     print("xp:", num_feat_xp, "| xd:", num_feat_xd)
 
-if mode == 0:
-    df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_train' + setting + '.csv')
-    train_drugs, train_prots, train_prots_seq, train_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
-    df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_test' + setting + '.csv')
-    test_drugs, test_prots, test_prots_seq, test_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
+df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_train' + setting + '.csv')
+train_drugs, train_prots, train_prots_seq, train_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
+df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_test' + setting + '.csv')
+test_drugs, test_prots, test_prots_seq, test_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
 
-    train_data = GraphPairDataset(smile_list = train_drugs, dta_graph = dta_graph, prot_list = train_prots)
-    test_data = GraphPairDataset(smile_list = test_drugs, dta_graph = dta_graph, prot_list = test_prots)
-
-    train_loader = DataLoader(train_data, batch_size = config.TRAIN_BATCH_SIZE, shuffle = True, collate_fn = collate, num_workers = 0)
-    test_loader = DataLoader(test_data, batch_size = config.TEST_BATCH_SIZE, shuffle = False, collate_fn = collate, num_workers = 0)
-
-if mode == 1:
-    pred_drugs, pred_prots, pred_prots_seqs = np.asarray(compound_iso_smiles), np.asarray(pdbs), np.asarray(pdbs_seqs)
-    pred_data = GraphPairDataset(smile_list = pred_drugs, dta_graph = dta_graph, prot_list = pred_prots)
-
-    pred_loader = DataLoader(pred_data, batch_size = config.PRED_BATCH_SIZE, shuffle = False, collate_fn = collate, num_workers = 0)
+train_data = GraphPairDataset(smile_list = train_drugs, dta_graph = dta_graph, prot_list = train_prots)
+test_data = GraphPairDataset(smile_list = test_drugs, dta_graph = dta_graph, prot_list = test_prots)
+train_loader = DataLoader(train_data, batch_size = config.TRAIN_BATCH_SIZE, shuffle = True, collate_fn = collate, num_workers = 0)
+test_loader = DataLoader(test_data, batch_size = config.TEST_BATCH_SIZE, shuffle = False, collate_fn = collate, num_workers = 0)
 
 device = torch.device(cuda_name if torch.cuda.is_available() else 'cpu')
 
@@ -297,74 +253,65 @@ model = modeling(num_features_xd=num_feat_xd, num_features_xt=num_feat_xp, devic
 model_file_name = 'saved_model/' + setting[1:] + '/model_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '.model'
 result_file_name = 'saved_model/' + setting[1:] + '/result_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '.csv'
 
-if mode == 0:
-    loss_fn = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr = LR)
-    best_mse = 1000
-    best_ci = 0
-    best_epoch = -1
+loss_fn = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr = LR)
+best_mse = 1000
+best_ci = 0
+best_epoch = -1
 
-    # New training
-    if from_resume:
-        best_mse, best_ci, start_epoch, optimizer, model, LR = resume(model, optimizer, model_file_name)
-    else:
-        start_epoch = 0
+# New training
+if from_resume:
+    best_mse, best_ci, start_epoch, optimizer, model, LR = resume(model, optimizer, model_file_name)
+else:
+    start_epoch = 0
 
-    lr_adjust_patience = 0
-    train_losses = []
-    for epoch in range(start_epoch, config.NUM_EPOCHS):
-        train_loss = train(model, device, train_loader, optimizer, epoch + 1)
-        train_losses.append(train_loss)
-        G, P = predicting(model, device, valid_loader)
-        ret = [rmse(G, P), mse(G, P), pearson(G, P), spearman(G, P), ci(G, P)]
-        # save the best model based on rmse on validation data
-        if set_num == 0:
-            if lr_adjust_patience > 40:
-                LR = adjust_learning_rate(optimizer, LR, 0.8)
-                lr_adjust_patience = 0
-        if ret[1] < best_mse:
-            best_epoch = epoch + 1
-            best_mse = ret[1]
-            best_ci = ret[-1]
-            G_t, P_t = predicting(model, device, test_loader)
-            ret_test = [rmse(G_t, P_t), mse(G_t, P_t), pearson(G_t, P_t), spearman(G_t, P_t), ci(G_t, P_t)]
-            # writer.add_scalar('RMSE/test', ret[1], epoch)
-            with open(result_file_name, 'w') as f:
-                f.write(','.join(map(str, ret_test)))
-            print('RMSE improved at epoch ', best_epoch, '; best_mse, best_ci:',
-                best_mse, best_ci, model_st, dataset)
+lr_adjust_patience = 0
+train_losses = []
+for epoch in range(start_epoch, config.NUM_EPOCHS):
+    train_loss = train(model, device, train_loader, optimizer, epoch + 1)
+    train_losses.append(train_loss)
+    G, P = predicting(model, device, valid_loader)
+    ret = [rmse(G, P), mse(G, P), pearson(G, P), spearman(G, P), ci(G, P)]
+    # save the best model based on rmse on validation data
+    if set_num == 0:
+        if lr_adjust_patience > 40:
+            LR = adjust_learning_rate(optimizer, LR, 0.8)
             lr_adjust_patience = 0
-            save_checkpoint(state={
-                'epoch': epoch + 1,
-                'best_epoch': best_epoch,
-                'arch': model_st,
-                'state_dict': model.state_dict(),
-                'best_mse': best_mse,
-                'best_ci': best_ci,
-                'optimizer': optimizer.state_dict(),
-                'LR': LR},
-                filename=model_file_name
-            )
-        else:
-            print(ret[1], 'No improvement since epoch ', best_epoch, '; best_mse, best_ci:',
-                best_mse, best_ci, model_st, dataset, LR)
-            lr_adjust_patience += 1
+    if ret[1] < best_mse:
+        best_epoch = epoch + 1
+        best_mse = ret[1]
+        best_ci = ret[-1]
+        G_t, P_t = predicting(model, device, test_loader)
+        ret_test = [rmse(G_t, P_t), mse(G_t, P_t), pearson(G_t, P_t), spearman(G_t, P_t), ci(G_t, P_t)]
+        # writer.add_scalar('RMSE/test', ret[1], epoch)
+        with open(result_file_name, 'w') as f:
+            f.write(','.join(map(str, ret_test)))
+        print('RMSE improved at epoch ', best_epoch, '; best_mse, best_ci:',
+            best_mse, best_ci, model_st, dataset)
+        lr_adjust_patience = 0
+        save_checkpoint(state={
+            'epoch': epoch + 1,
+            'best_epoch': best_epoch,
+            'arch': model_st,
+            'state_dict': model.state_dict(),
+            'best_mse': best_mse,
+            'best_ci': best_ci,
+            'optimizer': optimizer.state_dict(),
+            'LR': LR},
+            filename=model_file_name
+        )
+    else:
+        print(ret[1], 'No improvement since epoch ', best_epoch, '; best_mse, best_ci:',
+            best_mse, best_ci, model_st, dataset, LR)
+        lr_adjust_patience += 1
 
-        if (epoch+1)%50==0:
-            try:
-                np.save('loss/training_loss_'+str(epoch+1)+'.npy', np.array(train_losses))
-            except:
-                pass
+    if (epoch+1)%50==0:
+        try:
+            np.save('loss/training_loss_'+str(epoch+1)+'.npy', np.array(train_losses))
+        except:
+            pass
 
-    model.load_state_dict(torch.load(model_file_name)['state_dict'], strict = False)
-    G, P = predicting(model, device, test_loader)
+model.load_state_dict(torch.load(model_file_name)['state_dict'], strict = False)
+G, P = predicting(model, device, test_loader)
 
-    plot_test(G, P)
-
-if mode == 1:
-    model.load_state_dict(torch.load(model_file_name)['state_dict'], strict = False)
-    P = predicting(model, device, pred_loader).tolist()
-
-    dict = {'compound_iso_smiles': compound_iso_smiles, 'target_name': pdbs, 'target_sequence': pdbs_seqs, 'affinity': P}
-    pd.DataFrame(dict).to_csv('output/' + setting + '.csv')
-    
+plot_test(G, P)
