@@ -1,5 +1,11 @@
 GEFA/data
 GEFA/__pycache__
+GEFA/saved_model
+GEFA/smiles
+GEFA/*.pickle
+GEFA/*.png
+GEFA/data.tar.gz
+GraphINVENT/output_gdb13_1K
 RaptorX-3DModeling/data
 RaptorX-3DModeling/DL4DistancePrediction4/models
 RaptorX-3DModeling/DL4PropertyPrediction/models

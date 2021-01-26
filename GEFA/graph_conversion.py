@@ -38,7 +38,8 @@ def atom_features(atom):
 
 def smile_to_graph(smile, file_, plot_):
     mol = Chem.MolFromSmiles(smile)
-
+    if mol == None:
+        return "error", "error", "error"
     c_size = mol.GetNumAtoms()
 
     features = []
@@ -151,7 +152,7 @@ def prot_to_graph(seq, prot_contactmap, prot_target, file_, plot_, dataset='davi
     if config.is_profile_in_graph:
         ss_feat = aa_ss_feature(prot_target, dataset)
         sas_feat = aa_sas_feature(prot_target, dataset)
-    sequence_output = np.load('data/davis/emb/' + prot_target + '.npz', allow_pickle=True)
+    sequence_output = np.load('data/'+dataset+'/emb/' + prot_target + '.npz', allow_pickle=True)
     sequence_output = sequence_output[prot_target].reshape(-1, 1)[0][0]['seq'][1:-1, :]
     sequence_output = sequence_output.reshape(sequence_output.shape[0], sequence_output.shape[1])
     for i in range(c_size):

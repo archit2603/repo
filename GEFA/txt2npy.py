@@ -1,7 +1,10 @@
 import numpy as np
 import sys
 
-path = sys.argv[1]
+"""
+Python script to convert contact map from txt to npy
+"""
+path = sys.argv[1] # path to contact map txt file
 
 with open(path, 'r') as file:
     data = file.read()

@@ -6,14 +6,26 @@ dataset = sys.argv[1]
 
 # load smiles
 compound_iso_smiles = []
-for smi in os.listdir('data/'+dataset+'/smiles'):
+for file in os.listdir('data/'+dataset+'/smiles'):
     
-    with open('data/'+dataset+'/smiles/'+smi, 'r') as file:
-        data = file.read()
+    if file.endswith(".smi"):
+        with open('data/'+dataset+'/smiles/'+file, 'r') as f:
+            data = f.read()
 
-    for comp in data.split('\n'):
-        if(comp.split(' ')[0]!='' and comp.split(' ')[0]!='SMILES' ):
-            compound_iso_smiles.append(comp.split(' ')[0])
+        temp = data.split('\n')[1:]
+        for i in range(len(temp)):
+            temp[i] = temp[i].split(' ')[0]
+
+        valid_file = file.split('.')[0] + ".valid"
+        with open('data/'+dataset+'/smiles/'+valid_file, 'r') as f:
+            data = f.read()
+        
+        valid = data.split('\n')
+
+        for i in range(len(valid)):
+            if(valid[i] == '1.0' and len(temp[i])>4):
+                compound_iso_smiles.append(temp[i].upper())
+
 compound_iso_smiles = list(set(compound_iso_smiles))
 
 
@@ -21,12 +33,14 @@ compound_iso_smiles = list(set(compound_iso_smiles))
 pdbs = []
 pdbs_seqs = []
 for seq in os.listdir('data/'+dataset+'/sequences'):
-    
+    temp = ""
     with open('data/'+dataset+'/sequences/'+seq, 'r') as file:
         data = file.read()
 
     pdbs.append(data.split('\n')[0])
-    pdbs_seqs.append(data.split('\n')[1])
+    for string in data.split('\n')[1:]:
+        temp += string
+    pdbs_seqs.append(temp)
 
 # create dataset
 compound_iso_smiles_temp = []

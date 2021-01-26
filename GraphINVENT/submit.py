@@ -10,7 +10,7 @@ import time
 
 # define what you want to do for the specified job(s)
 dataset = "gdb13_1K"
-job_type = "train"       # "preprocess", "train", "generate", or "test"
+job_type = "generate"       # "preprocess", "train", "generate", or "test"
 jobdir_start_idx = 0     # where to start indexing job dirs
 n_jobs = 1               # number of jobs to run per model
 restart = False
@@ -23,7 +23,7 @@ run_time = "1-00:00:00"  # hh:mm:ss
 mem_GB = 20
 
 # set paths here
-python_path = f"/home/archit3400/miniconda3/envs/GI/bin/python"
+python_path = f"/home/azureuser/miniconda3/envs/GI/bin/python"
 graphinvent_path = f"./graphinvent/"
 data_path = f"./data/"
 
@@ -41,9 +41,11 @@ params = {
     "min_rel_lr": 5e-2,  # use 1e-3 for larger datasets
     "lrdf": 0.9999,
     "lrdi": 100,
-    "epochs": 40,
+    "epochs": 400,
     "batch_size": 1000,
     "block_size": 100000,
+    "generation_epoch": 400,
+    "n_samples": 30000,
     # additional paramaters can be defined here, if different from the "defaults"
     # (!!!) for "generate" jobs, don't forget to specify "generation_epoch" and "n_samples"
 }

@@ -39,12 +39,6 @@ print('Embedding.') if config.is_emb_in_graph else print('')
 dataset = config.dataset
 print('Dataset: ', dataset)
 
-# Model dataset
-try:    
-    model_dataset = config.model_dataset
-except:
-    pass
-
 mode = config.mode
 
 # Model to be used
@@ -147,12 +141,9 @@ def predicting(model, device, loader):
             prot = data[1].to(device)
             output = model(drug, prot)
             total_preds = torch.cat((total_preds, output.cpu()), 0)
-            if (mode!=2):
-                total_labels = torch.cat((total_labels, drug.y.view(-1, 1).cpu()), 0)
-    if (mode!=2)
-        return total_labels.numpy().flatten(), total_preds.numpy().flatten()
-    return total_preds.numpy().flatten()
-
+            total_labels = torch.cat((total_labels, drug.y.view(-1, 1).cpu()), 0)
+    return total_labels.numpy().flatten(), total_preds.numpy().flatten()
+    
 
 def resume(model, optimizer, savefile):
     if os.path.isfile(savefile):
@@ -173,24 +164,33 @@ pdbs = []
 pdbs_seqs = []
 all_labels = []
 
-if mode!=2:
-    # Load train and test data
-    opts = ['train', 'test', 'valid']
-    for opt in opts:
-        df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_' + opt + setting + '.csv')
-        compound_iso_smiles += list(df['compound_iso_smiles'])
-        pdbs += list(df['target_name'])
-        pdbs_seqs += list(df['target_sequence'])
-        all_labels += list(df['affinity'])
-    pdbs_tseqs = set(zip(pdbs, pdbs_seqs, compound_iso_smiles, all_labels))
 
-if mode==2:
-    # Load prediction data
-    df = pd.read_csv('data/'+dataset+'/split/'+dataset+'.csv')
-    compound_iso_smiles = list(df['compound_iso_smiles'])
-    pdbs = list(df['target_name'])
-    pdbs_seqs = list(df['target_sequence'])
-    pdbs_tseqs = set(zip(pdbs, pdbs_seqs, compound_iso_smiles))
+opts = ['train', 'test', 'valid']
+for opt in opts:
+    df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_' + opt + setting + '.csv')
+    compound_iso_smiles += list(df['compound_iso_smiles'])
+    pdbs += list(df['target_name'])
+    pdbs_seqs += list(df['target_sequence'])
+    all_labels += list(df['affinity'])
+pdbs_tseqs = set(zip(pdbs, pdbs_seqs, compound_iso_smiles, all_labels))
+
+# Drugs pre-processing
+print('Pre-processing smiles...')
+saved_drug_graph = {}
+if os.path.isfile('saved_drug_graph_'+dataset+'.pickle'):
+    print('Load pre-processed file for drug_graph')
+    with open('saved_drug_graph_'+dataset+'.pickle', 'rb') as handle:
+        saved_drug_graph = pickle.load(handle)
+
+else:
+    for smiles in compound_iso_smiles:
+        c_size2, features2, edge_index2 = smile_to_graph(smiles, smiles + '.jpg', plot_drug)
+        g2 = DATA.Data(
+            x = torch.Tensor(features2),
+            edge_index = torch.LongTensor(edge_index2).transpose(1, 0),
+        saved_drug_graph[smiles] = g2
+    with open('saved_drug_graph_'+dataset+'.pickle', 'wb') as handle:
+        pickle.dump(saved_drug_graph, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # Protein pre-processing
 dta_graph = {}
@@ -219,29 +219,10 @@ else:
         pickle.dump(saved_prot_graph, handle, protocol = pickle.HIGHEST_PROTOCOL)
 print(len(compound_iso_smiles))
 
-# Drugs pre-processing
-print('Pre-processing smiles...')
-saved_drug_graph = {}
-if os.path.isfile('saved_drug_graph_'+dataset+'.pickle'):
-    print('Load pre-processed file for drug_graph')
-    with open('saved_drug_graph_'+dataset+'.pickle', 'rb') as handle:
-        saved_drug_graph = pickle.load(handle)
-
-else:
-    for smiles in compound_iso_smiles:
-        c_size2, features2, edge_index2 = smile_to_graph(smiles, smiles + '.jpg', plot_drug)
-        g2 = DATA.Data(
-            x = torch.Tensor(features2),
-            edge_index = torch.LongTensor(edge_index2).transpose(1, 0),
-        )
-        saved_drug_graph[smiles] = g2
-    with open('saved_drug_graph_'+dataset+'.pickle', 'wb') as handle:
-        pickle.dump(saved_drug_graph, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-
 print('Extracting from pre-processed Data...')
 print(len(pdbs_tseqs))
 index = 1
+
 for target, seq, smile, label in pdbs_tseqs:
     print('Extracting', index, '...')
     index+=1
@@ -254,36 +235,29 @@ for target, seq, smile, label in pdbs_tseqs:
     num_feat_xd = g2.x.size()[1]
     print("xp:", num_feat_xp, "| xd:", num_feat_xd)
 
-if mode!=2:
-    df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_train' + setting + '.csv')
-    train_drugs, train_prots, train_prots_seq, train_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
-    df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_test' + setting + '.csv')
-    test_drugs, test_prots, test_prots_seq, test_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
 
-    train_data = GraphPairDataset(smile_list = train_drugs, dta_graph = dta_graph, prot_list = train_prots)
-    test_data = GraphPairDataset(smile_list = test_drugs, dta_graph = dta_graph, prot_list = test_prots)
-    train_loader = DataLoader(train_data, batch_size = config.TRAIN_BATCH_SIZE, shuffle = True, collate_fn = collate, num_workers = 0)
-    test_loader = DataLoader(test_data, batch_size = config.TEST_BATCH_SIZE, shuffle = False, collate_fn = collate, num_workers = 0)
+df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_train' + setting + '.csv')
+train_drugs, train_prots, train_prots_seq, train_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
+df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_test' + setting + '.csv')
+test_drugs, test_prots, test_prots_seq, test_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
 
-if mode==2:
-    df = pd.read_csv('data/' + dataset + '/split/' + dataset + '.csv')
-    pred_drugs, pred_prots, pred_prots_seq = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence']))
-
-    pred_data = GraphPairDataset(smile_list = pred_drugs, dta_graph = dta_graph, prot_list = pred_prots)
-    pred_loader = DataLoader(pred_data, batch_size = config.PRED_BATCH_SIZE, shuffle = True, collate_fn = collate, num_workers = 0)
+train_data = GraphPairDataset(smile_list = train_drugs, dta_graph = dta_graph, prot_list = train_prots)
+test_data = GraphPairDataset(smile_list = test_drugs, dta_graph = dta_graph, prot_list = test_prots)
+train_loader = DataLoader(train_data, batch_size = config.TRAIN_BATCH_SIZE, shuffle = True, collate_fn = collate, num_workers = 0)
+test_loader = DataLoader(test_data, batch_size = config.TEST_BATCH_SIZE, shuffle = False, collate_fn = collate, num_workers = 0)
 
 device = torch.device(cuda_name if torch.cuda.is_available() else 'cpu')
 
 model = modeling(num_features_xd=num_feat_xd, num_features_xt=num_feat_xp, device=device).to(device)
 
-if mode != 2:
-    loss_fn = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr = LR)
-    best_mse = 1000
-    best_ci = 0
-    best_epoch = -1
-    model_file_name = 'saved_model/' + setting[1:] + '/model_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '.model'
-    result_file_name = 'saved_model/' + setting[1:] + '/result_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '.csv'
+
+loss_fn = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr = LR)
+best_mse = 1000
+best_ci = 0
+best_epoch = -1
+model_file_name = 'saved_model/' + setting[1:] + '/model_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '_' + num_feat_xd + '_' + num_feat_xp + '.model'
+result_file_name = 'saved_model/' + setting[1:] + '/result_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '_' + num_feat_xd + '_' + num_feat_xp + '.csv'
 
 if mode == 0:
     # New training
@@ -347,15 +321,5 @@ if mode == 0:
 if mode == 1:
     model.load_state_dict(torch.load(model_file_name)['state_dict'], strict = False)
     G, P = predicting(model, device, test_loader)
-    plot_test(G, P)
-
-if mode == 2:
-    prediction_file_name = 'data/' + dataset + '/result/' + dataset + '.csv'
-    model_file_name = 'saved_model/' + setting[1:] + '/model_' + model_st + '_' + model_dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '.model'
-    model.load_state_dict(torch.load(model_file_name)['state_dict'], strict = False)
-    
-    P = predicting(model, device, pred_loader)
-    dict = {'compound_iso_smiles': compound_iso_smiles, 'target_name': pdbs, 'target_sequence': pdbs_seqs, 'predictions': P}
-    df = pd.DataFrame(dict)
-    df.to_csv(prediction_file_name)    
+    plot_test(G, P) 
 

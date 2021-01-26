@@ -1,4 +1,5 @@
 import os
+os.environ["THEANO_FLAGS"] = "device=cpu,floatX=float64"
 import sys
 import numpy as np
 import cPickle
