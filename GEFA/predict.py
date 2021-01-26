@@ -20,14 +20,7 @@ from models.GLFA import GLFA
 import matplotlib.pyplot as plt
 
 model_path = config.model_path
-num_feat_xp = int(model_path.split('_')[-1].split('.')[0]) # Number of features of proteins in the trained model
-num_feat_xd = int(model_path.split('_')[-2]) # Number of features of drugs in the trained model
 
-# # Features used in the trained model
-# model_name_seq = '_seq' if config.is_seq_in_graph is True else ''
-# model_name_con = '_con' if config.is_con_in_graph is True else ''
-# model_name_profile = '_pf' if config.is_profile_in_graph is True else ''
-# model_name_emb = '_emb' if config.is_emb_in_graph is True else ''
 plot_drug = config.to_plot_drug
 plot_prot = config.to_plot_prot
 
@@ -43,11 +36,6 @@ model_st = modeling.__name__
 cuda_name = "cuda:" + str(config.cuda)
 print('CUDA name:', cuda_name)
 
-# setting number of the trained model
-# set_num = config.setting
-# settings = ['_setting_1', '_setting_2', '_setting_3', '_setting_4']
-# setting = settings[set_num]
-# print('Setting: ', setting)
 
 def collate(data_list):
     batchA = Batch.from_data_list([data[0] for data in data_list])
@@ -85,19 +73,6 @@ def predicting(model, device, loader):
             output = model(drug, prot)
             total_preds = torch.cat((total_preds, output.cpu()), 0)
     return total_preds.numpy().flatten()
-
-# train_compound_iso_smiles = []
-# train_pdbs = []
-# train_pdbs_seqs = []
-# train_all_labels = []
-
-# opts = ['train', 'test', 'valid']
-# for opt in opts:
-#     df = pd.read_csv('data/'+dataset+'/split/'+dataset+'_'+opt+setting+'.csv')
-#     train_compound_iso_smiles += list(df['compound_iso_smiles'])
-#     train_pdbs += list(df['target_name'])
-#     train_pdbs_seqs += list(df['target_sequence'])
-#     train_all_labels += list(df['affinity'])
 
 compound_iso_smiles = []
 pdbs = []
@@ -176,9 +151,9 @@ for target, seq, smile in pdbs_tseqs:
     temp_pdbs.append(target)
     temp_pdbs_seqs.append(seq)
     dta_graph[(target, smile)] = [g, g2]
-    xp = g.x.size()[1]
-    xd = g2.x.size()[1]
-    print("xp:", xp, "| xd:", xd)
+    num_feat_xp = g.x.size()[1]
+    num_feat_xd = g2.x.size()[1]
+    print("xp:", num_feat_xp, "| xd:", num_feat_xd)
 
 compound_iso_smiles = temp_compound_iso_smiles
 pdbs = temp_pdbs
