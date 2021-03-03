@@ -188,6 +188,7 @@ else:
         g2 = DATA.Data(
             x = torch.Tensor(features2),
             edge_index = torch.LongTensor(edge_index2).transpose(1, 0),
+        )
         saved_drug_graph[smiles] = g2
     with open('saved_drug_graph_'+dataset+'.pickle', 'wb') as handle:
         pickle.dump(saved_drug_graph, handle, protocol=pickle.HIGHEST_PROTOCOL)
