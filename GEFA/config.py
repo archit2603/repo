@@ -3,7 +3,7 @@ is_con_in_graph = True          # set True to use contact map data
 is_profile_in_graph = True      # set True to use profile data
 is_emb_in_graph = True          # set True to use embedding features from TAPE-proteins, False to use one-hot encoded data
 
-NUM_EPOCHS = 400               # Number of epochs for which the model is trained
+NUM_EPOCHS = 3               # Number of epochs for which the model is trained
 TRAIN_BATCH_SIZE = 128          # Number of samples for one training batch
 TEST_BATCH_SIZE = 256           # Number of samples for one testing batch
 PRED_BATCH_SIZE = 256           # Number of samples for one prediction batch. Required only for running predict.py

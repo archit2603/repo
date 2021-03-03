@@ -241,11 +241,15 @@ df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_train' + setting + 
 train_drugs, train_prots, train_prots_seq, train_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
 df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_test' + setting + '.csv')
 test_drugs, test_prots, test_prots_seq, test_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
+df = pd.read_csv('data/' + dataset + '/split/' + dataset + '_valid' + setting + '.csv')
+valid_drugs, valid_prots, valid_prots_seq, valid_Y = np.asarray(list(df['compound_iso_smiles'])), np.asarray(list(df['target_name'])), np.asarray(list(df['target_sequence'])), np.asarray(list(df['affinity']))
 
 train_data = GraphPairDataset(smile_list = train_drugs, dta_graph = dta_graph, prot_list = train_prots)
 test_data = GraphPairDataset(smile_list = test_drugs, dta_graph = dta_graph, prot_list = test_prots)
+valid_data = GraphPairDataset(smile_list = valid_drugs, dta_graph = dta_graph, prot_list = valid_prots)
 train_loader = DataLoader(train_data, batch_size = config.TRAIN_BATCH_SIZE, shuffle = True, collate_fn = collate, num_workers = 0)
 test_loader = DataLoader(test_data, batch_size = config.TEST_BATCH_SIZE, shuffle = False, collate_fn = collate, num_workers = 0)
+valid_loader = DataLoader(valid_data, batch_size = config.TEST_BATCH_SIZE, shuffle = False, collate_fn = collate, num_workers = 0)
 
 device = torch.device(cuda_name if torch.cuda.is_available() else 'cpu')
 
@@ -257,8 +261,14 @@ optimizer = torch.optim.Adam(model.parameters(), lr = LR)
 best_mse = 1000
 best_ci = 0
 best_epoch = -1
-model_file_name = 'saved_model/' + setting[1:] + '/model_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '_' + num_feat_xd + '_' + num_feat_xp + '.model'
-result_file_name = 'saved_model/' + setting[1:] + '/result_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '_' + num_feat_xd + '_' + num_feat_xp + '.csv'
+if(not os.path.exists('saved_model/'+setting[1:])):
+    os.makedirs('saved_model/'+setting[1:])
+model_file_name = 'saved_model/' + setting[1:] + '/model_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '_' + str(num_feat_xd) + '_' + str(num_feat_xp) + '.model'
+with open(model_file_name, 'x') as f:
+    pass
+result_file_name = 'saved_model/' + setting[1:] + '/result_' + model_st + '_' + dataset + model_name_emb + model_name_seq + model_name_con + model_name_profile + setting + '_' + str(num_feat_xd) + '_' + str(num_feat_xp) + '.csv'
+with open(result_file_name, 'x') as f:
+    pass
 
 if mode == 0:
     # New training
@@ -307,7 +317,7 @@ if mode == 0:
                 best_mse, best_ci, model_st, dataset, LR)
             lr_adjust_patience += 1
 
-        if (epoch+1)%50==0:
+        if (epoch+1)%1==0:
             try:
                 #np.save('loss/training_loss_'+str(epoch+1)+'.npy', np.array(train_losses))
                 plot_losses(np.array(train_losses), epoch+1)
