@@ -1,5 +1,5 @@
 #!/bin/bash
-source /home/azureuser/miniconda3/etc/profile.d/conda.sh # change this to match the location of your conda.sh file
+source /home/archit3400/anaconda3/etc/profile.d/conda.sh # change this to match the location of your conda.sh file
 
 cmd=`readlink -f $0`
 cmdDir=`dirname $cmd`
