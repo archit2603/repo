@@ -1,7 +1,10 @@
 GEFA/data
-GEFA/__pycache__
 GEFA/saved_model
 GEFA/smiles
+*.pickle
+*.gpickle
+*.ipynb
+*.pyc
 GEFA/*.pickle
 GEFA/*.png
 GEFA/models/__pycache__
