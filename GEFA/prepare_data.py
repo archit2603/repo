@@ -32,9 +32,9 @@ compound_iso_smiles = list(set(compound_iso_smiles))
 # laod targets
 pdbs = []
 pdbs_seqs = []
-for seq in os.listdir('data/'+dataset+'/sequences'):
+for seq in os.listdir('data/'+dataset+'/seq'):
     temp = ""
-    with open('data/'+dataset+'/sequences/'+seq, 'r') as file:
+    with open('data/'+dataset+'/seq/'+seq, 'r') as file:
         data = file.read()
 
     pdbs.append(data.split('\n')[0])
