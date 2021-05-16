@@ -18,4 +18,4 @@ to_plot_prot = False            # set True to plot graphs of proteins from smile
 mode = 0                        # 0 for training, 1 for evaluating trained model on test data
 
 # path to the model on which predictions will be made. required only while making predictions.
-model_path = "saved_model/setting_1/model_GEFA_davis_emb_seq_con_pf_setting_1.model"
+model_path = "saved_model/setting_1/model_GEFA_davis_emb_seq_con_pf_setting_1_70_779.model"

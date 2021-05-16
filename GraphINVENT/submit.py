@@ -10,20 +10,20 @@ import time
 
 # define what you want to do for the specified job(s)
 dataset = "gdb13_1K"
-job_type = "generate"       # "preprocess", "train", "generate", or "test"
+job_type = "train"       # "preprocess", "train", "generate", or "test"
 jobdir_start_idx = 0     # where to start indexing job dirs
 n_jobs = 1               # number of jobs to run per model
 restart = False
 force_overwrite = False  # overwrite job directories which already exist
-jobname = "example"      # used to create a sub directory
+jobname = "train_1"      # used to create a sub directory
 
 # if running using SLURM, specify the parameters below
 use_slurm = False        # use SLURM or not
 run_time = "1-00:00:00"  # hh:mm:ss
-mem_GB = 20
+mem_GB = 15
 
 # set paths here
-python_path = f"/home/azureuser/miniconda3/envs/GI/bin/python"
+python_path = f"/home/archit3400/anaconda3/envs/geometric/bin/python"
 graphinvent_path = f"./graphinvent/"
 data_path = f"./data/"
 
@@ -57,7 +57,7 @@ if job_type == "preprocess":  # preprocessing jobs CPU only
     cpus_per_task = 1
 else:
     partition = "gpu"
-    cpus_per_task = 4
+    cpus_per_task = 6
 
 
 def submit():
