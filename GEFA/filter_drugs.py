@@ -12,7 +12,6 @@ import numpy as np
 import config
 
 # The dataset to be used for the knowledge graph
-dataset = config.dataset
 pred_dataset = config.pred_dataset
 
 # Threshold value for creating edges
@@ -70,9 +69,9 @@ smiles = list(set(smiles))
 protein_names = list(set(protein_names))
 
 # Read the graph
-if os.path.isfile(dataset+'.gpickle'):
+if os.path.isfile('KG.gpickle'):
     print('Loading pre-processed knowledge graph...')
-    G = nx.read_gpickle(dataset+'.gpickle')
+    G = nx.read_gpickle('KG.gpickle')
 else:
     print('Prepare the knowledge graph from the dataset first!')
     sys.exit()
@@ -90,7 +89,7 @@ for node in G.nodes(data=True):
         protein_seqs_KG.append(node[1]['seq'])
         proteins_KG[node[0]] = node[1]['seq']
 
-print(f'\nKnowledge graph dataset: {dataset}')
+#print(f'\nKnowledge graph dataset: {dataset}')
 print(f'Number of drugs: {len(smiles_KG)}')
 print(f'Number of proteins: {len(proteins_KG)}')
 print(f'Number of nodes: {G.number_of_nodes()}')
