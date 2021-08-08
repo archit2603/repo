@@ -4,13 +4,9 @@ Train the models for generating molecules and DTA prediction.
 
 ## Generating Molecules
 
----
-
 Follow the instructions in the [GraphINVENT](../GraphINVENT/tutorials) tutorial for training the model for molecule generation.
 
 ## DTA Prediction
-
----
 
 * Navigate to the [GEFA](../GEFA) folder and fetch the davis dataset using git lfs.
 

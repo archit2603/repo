@@ -4,8 +4,6 @@ Set up the environment for extracting features from proteins, molecule generatio
 
 ## Extracting Features From Proteins
 
----
-
 ### **TAPE**
 
 TAPE is installed as a python package. It can be installed using either the instructions given in [TAPE](https://github.com/songlab-cal/tape)'s README or by running the following command:
@@ -35,8 +33,6 @@ Only the HHDIR and HHDB environment variables need to be set in the raptorx-exte
 Follow the instructions in [Predict_Property](https://github.com/realbigws/Predict_Property)'s README. A separate environment is not required.
 
 ## Molecule Generation and DTA Prediction
-
----
 
 ### **Python**
 

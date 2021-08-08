@@ -4,8 +4,6 @@
 
 ## Step 1: Protein embeddings generation
 
----
-
 * Run the following command to generate embeddings from the protein sequence.
 
 ```bash
@@ -15,8 +13,6 @@ tape-embed transformer protein.fasta protein.npzcd  bert-base --tokenizer unirep
 * Store the npz file in the data/{dataset}/emb folder in the [GEFA](../GEFA/) folder.
 
 ## Step 2: Contact map prediction from protein sequence using RaptorX
-
----
 
 * Use the BuildFeatures.sh script in the BuildFeatures folder for building the features from the protein sequence.
 
@@ -43,8 +39,6 @@ python txt2npy.py protein protein.CM.txt
 ```
 
 ## Step 3: Property Prediction from protein sequence
-
----
 
 * Use the Predict_Property.sh script in the root folder of the Predict_Property repository for property prediction.
 

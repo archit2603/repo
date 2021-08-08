@@ -4,13 +4,9 @@
 
 ## Step 1: Generating molecules
 
----
-
 Follow the instructions in the [GraphINVENT](../GraphINVENT/tutorials) tutorial to generate molecules.
 
 ## Step 2: Preparing the Data
-
----
 
 * [Extract features from proteins](Extracting_features_from_proteins.md) and place them in the appropriate folder.
 
@@ -23,8 +19,6 @@ python prepare_data.py {dataset}
 ```
 
 ## Step 3: DTA prediction
-
----
 
 * Set the appropriate values in [config.py](../GEFA/config.py).
 
